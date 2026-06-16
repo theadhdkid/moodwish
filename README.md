@@ -1,0 +1,4 @@
+MoodWish is a wishlist app but more.
+It's your all-in-one wishlist application that has everything to do with your wishlist. It's a browser extension that allows you to add products as you browse. The app itself stores everything you love and need and it can be categorized however you want. if you're feeling a little creative, remember polyvore and tumblr? Let's bring that one back: Switch from list view to collage mode. Organize your products and make your ultimate vision board with them!
+Aside from personal fun, MOODwish is also for your loved ones! It allows you to make your wishlist public or private, add friends and family and guess what? This birthday you'll actually get something you've been wanting without having to ask for it directly (we all know how that feels!).
+So, presenting MOODWish, your favourite place to keep everything you can't wait to have!
