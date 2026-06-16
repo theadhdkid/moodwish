@@ -40,7 +40,7 @@ function App() {
   const [newBoardTitle, setNewBoardTitle] = useState("");
   const [newBoardDescription, setNewBoardDescription] = useState("");
 
- const [newItemTitle, setNewItemTitle] = useState("");
+const [newItemTitle, setNewItemTitle] = useState("");
 const [newItemUrl, setNewItemUrl] = useState("");
 const [newItemImageUrl, setNewItemImageUrl] = useState("");
 const [newItemPrice, setNewItemPrice] = useState("");
@@ -337,6 +337,34 @@ async function saveEditedItem(itemId: string) {
     setBoardsLoading(false);
   }
 
+  async function updateWishlistViewMode(viewMode: "list" | "collage") {
+    if (!selectedBoard) return;
+
+  setMessage("");
+
+  const { error } = await supabase
+    .from("boards")
+    .update({ view_mode: viewMode })
+    .eq("id", selectedBoard.id);
+
+  if (error) {
+    setMessage(error.message);
+    return;
+  }
+
+  const updatedBoard = {
+    ...selectedBoard,
+    view_mode: viewMode,
+  };
+
+  setSelectedBoard(updatedBoard);
+  setBoards((currentBoards) =>
+    currentBoards.map((board) =>
+      board.id === selectedBoard.id ? updatedBoard : board
+    )
+  );
+}
+
   async function handleAuth(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
@@ -410,6 +438,23 @@ async function saveEditedItem(itemId: string) {
               {selectedBoard.description && (
                 <p className="muted">{selectedBoard.description}</p>
               )}
+
+
+              <div className="view-toggle">
+  <button
+    className={selectedBoard.view_mode === "list" ? "active" : ""}
+    onClick={() => updateWishlistViewMode("list")}
+  >
+    List
+  </button>
+
+  <button
+    className={selectedBoard.view_mode === "collage" ? "active" : ""}
+    onClick={() => updateWishlistViewMode("collage")}
+  >
+    Collage
+  </button>
+</div>
             </div>
 
             <div className="header-actions">
@@ -475,9 +520,22 @@ async function saveEditedItem(itemId: string) {
               <p className="muted">No items yet. Add your first item above.</p>
             )}
 
-            <div className="items-list">
+            <div
+  className={
+    selectedBoard.view_mode === "collage"
+      ? "items-list collage-list"
+      : "items-list"
+  }
+>
               {items.map((item) => (
-               <article key={item.id} className="item-card">
+<article
+  key={item.id}
+  className={
+    selectedBoard.view_mode === "collage"
+      ? "item-card collage-card"
+      : "item-card"
+  }
+>
   {editingItemId === item.id ? (
     <div className="edit-item-form">
       <input
@@ -531,35 +589,43 @@ async function saveEditedItem(itemId: string) {
     </div>
   ) : (
     <>
-      {item.image_url && (
+      {item.image_url ? (
         <img className="item-image" src={item.image_url} alt={item.title} />
+      ) : (
+        <div className="item-image image-placeholder">
+          <span>{item.title.slice(0, 1).toUpperCase()}</span>
+        </div>
       )}
 
       <div className="item-content">
-        <h3>{item.title}</h3>
+        <div>
+          <h3>{item.title}</h3>
 
-        {item.price && <p className="item-price">{item.price}</p>}
-        {item.notes && <p>{item.notes}</p>}
+          {item.price && <p className="item-price">{item.price}</p>}
+          {item.notes && <p>{item.notes}</p>}
+        </div>
 
-        {item.url && (
-          <a href={item.url} target="_blank" rel="noreferrer">
-            Open link
-          </a>
-        )}
-      </div>
+        <div className="item-footer">
+          {item.url && (
+            <a href={item.url} target="_blank" rel="noreferrer">
+              Open link
+            </a>
+          )}
 
-      <div className="item-actions">
-        <button className="icon-button" onClick={() => startEditingItem(item)}>
-          Edit
-        </button>
+          <div className="item-actions">
+            <button className="icon-button" onClick={() => startEditingItem(item)}>
+              Edit
+            </button>
 
-        <button
-          className="icon-button danger-button"
-          onClick={() => deleteItem(item.id)}
-          aria-label={`Delete ${item.title}`}
-        >
-          Delete
-        </button>
+            <button
+              className="icon-button danger-button"
+              onClick={() => deleteItem(item.id)}
+              aria-label={`Delete ${item.title}`}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
       </div>
     </>
   )}
