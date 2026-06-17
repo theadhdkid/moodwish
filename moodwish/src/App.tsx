@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
+import { Rnd } from "react-rnd";
 import { supabase } from "./lib/supabase";
 import "./App.css";
 
@@ -10,7 +11,7 @@ type Board = {
   description: string | null;
   visibility: "private" | "friends" | "public";
   background: string | null;
-  view_mode: "list" | "collage";
+  view_mode: "list" | "collage" | "vision";
   created_at: string;
 };
 
@@ -23,6 +24,16 @@ type WishlistItem = {
   image_url: string | null;
   price: string | null;
   notes: string | null;
+
+  vision_x: number | null;
+  vision_y: number | null;
+  vision_width: number | null;
+  vision_height: number | null;
+  vision_rotation: number | null;
+  vision_z_index: number | null;
+  show_label: boolean | null;
+  show_price: boolean | null;
+
   position: number | null;
   created_at: string;
 };
@@ -337,7 +348,7 @@ async function saveEditedItem(itemId: string) {
     setBoardsLoading(false);
   }
 
-  async function updateWishlistViewMode(viewMode: "list" | "collage") {
+  async function updateWishlistViewMode(viewMode: "list" | "collage" | "vision") {
     if (!selectedBoard) return;
 
   setMessage("");
@@ -361,6 +372,38 @@ async function saveEditedItem(itemId: string) {
   setBoards((currentBoards) =>
     currentBoards.map((board) =>
       board.id === selectedBoard.id ? updatedBoard : board
+    )
+  );
+}
+
+async function updateItemVisionLayout(
+  itemId: string,
+  layout: {
+    vision_x?: number;
+    vision_y?: number;
+    vision_width?: number;
+    vision_height?: number;
+    vision_z_index?: number;
+  }
+) {
+  const { error } = await supabase
+    .from("wishlist_items")
+    .update(layout)
+    .eq("id", itemId);
+
+  if (error) {
+    setMessage(error.message);
+    return;
+  }
+
+  setItems((currentItems) =>
+    currentItems.map((item) =>
+      item.id === itemId
+        ? {
+            ...item,
+            ...layout,
+          }
+        : item
     )
   );
 }
@@ -440,22 +483,30 @@ async function saveEditedItem(itemId: string) {
               )}
 
 
-              <div className="view-toggle">
-  <button
-    className={selectedBoard.view_mode === "list" ? "active" : ""}
-    onClick={() => updateWishlistViewMode("list")}
-  >
-    List
-  </button>
+          <div
+                    className="view-toggle">
+                  <button
+                    className={selectedBoard.view_mode === "list" ? "active" : ""}
+                    onClick={() => updateWishlistViewMode("list")}
+                  >
+                    List
+                  </button>
 
-  <button
-    className={selectedBoard.view_mode === "collage" ? "active" : ""}
-    onClick={() => updateWishlistViewMode("collage")}
-  >
-    Collage
-  </button>
-</div>
-            </div>
+                  <button
+                    className={selectedBoard.view_mode === "collage" ? "active" : ""}
+                    onClick={() => updateWishlistViewMode("collage")}
+                  >
+                    Collage
+                  </button>
+
+                  <button
+                    className={selectedBoard.view_mode === "vision" ? "active" : ""}
+                    onClick={() => updateWishlistViewMode("vision")}
+                  >
+                    Vision
+                  </button>
+                </div>
+           </div>
 
             <div className="header-actions">
               <button className="subtle-button danger-button" onClick={deleteWishlist}>
@@ -520,118 +571,187 @@ async function saveEditedItem(itemId: string) {
               <p className="muted">No items yet. Add your first item above.</p>
             )}
 
-            <div
-  className={
-    selectedBoard.view_mode === "collage"
-      ? "items-list collage-list"
-      : "items-list"
-  }
->
-              {items.map((item) => (
-<article
-  key={item.id}
-  className={
-    selectedBoard.view_mode === "collage"
-      ? "item-card collage-card"
-      : "item-card"
-  }
->
-  {editingItemId === item.id ? (
-    <div className="edit-item-form">
-      <input
-        type="text"
-        placeholder="Item name"
-        value={editItemTitle}
-        onChange={(event) => setEditItemTitle(event.target.value)}
-      />
+                    {selectedBoard.view_mode === "vision" ? (
+            <div className="vision-canvas">
+              {items.map((item, index) => (
+                <Rnd
+                  key={item.id}
+                  bounds="parent"
+                  enableUserSelectHack={false}
+                  dragGrid={[1, 1]}
+                  resizeGrid={[1, 1]}
+                  size={{
+                    width: item.vision_width ?? 220,
+                    height: item.vision_height ?? 220,
+                  }}
+                  position={{
+  x: item.vision_x ?? (40 + (index % 4) * 190),
+  y: item.vision_y ?? (40 + Math.floor(index / 4) * 190),
+}}
+                  minWidth={120}
+                  minHeight={120}
+                  onDragStop={(_event, data) => {
+                    updateItemVisionLayout(item.id, {
+                      vision_x: Math.round(data.x),
+                      vision_y: Math.round(data.y),
+                    });
+                  }}
+                  onResizeStop={(_event, _direction, ref, _delta, position) => {
+                    updateItemVisionLayout(item.id, {
+                      vision_width: Math.round(ref.offsetWidth),
+                      vision_height: Math.round(ref.offsetHeight),
+                      vision_x: Math.round(position.x),
+                      vision_y: Math.round(position.y),
+                    });
+                  }}
+                >
+                  <div className="vision-free-item">
+                    {item.url ? (
+                      <a href={item.url} target="_blank" rel="noreferrer">
+                        {item.image_url ? (
+                          <img src={item.image_url} alt={item.title} />
+                        ) : (
+                          <div className="vision-placeholder">
+                            {item.title.slice(0, 1).toUpperCase()}
+                          </div>
+                        )}
+                      </a>
+                    ) : item.image_url ? (
+                      <img src={item.image_url} alt={item.title} />
+                    ) : (
+                      <div className="vision-placeholder">
+                        {item.title.slice(0, 1).toUpperCase()}
+                      </div>
+                    )}
 
-      <input
-        type="url"
-        placeholder="Link"
-        value={editItemUrl}
-        onChange={(event) => setEditItemUrl(event.target.value)}
-      />
+                    {item.show_label !== false && (
+                      <div className="vision-label">
+                        <span>{item.title}</span>
+                      </div>
+                    )}
 
-      <input
-        type="url"
-        placeholder="Image URL"
-        value={editItemImageUrl}
-        onChange={(event) => setEditItemImageUrl(event.target.value)}
-      />
-
-      <input
-        type="text"
-        placeholder="Price"
-        value={editItemPrice}
-        onChange={(event) => setEditItemPrice(event.target.value)}
-      />
-
-      <input
-        type="text"
-        placeholder="Notes"
-        value={editItemNotes}
-        onChange={(event) => setEditItemNotes(event.target.value)}
-      />
-
-      <div className="item-actions">
-        <button
-          className="subtle-button"
-          onClick={() => saveEditedItem(item.id)}
-          disabled={itemsLoading}
-        >
-          Save
-        </button>
-
-        <button className="subtle-button" onClick={cancelEditingItem}>
-          Cancel
-        </button>
-      </div>
-    </div>
-  ) : (
-    <>
-      {item.image_url ? (
-        <img className="item-image" src={item.image_url} alt={item.title} />
-      ) : (
-        <div className="item-image image-placeholder">
-          <span>{item.title.slice(0, 1).toUpperCase()}</span>
-        </div>
-      )}
-
-      <div className="item-content">
-        <div>
-          <h3>{item.title}</h3>
-
-          {item.price && <p className="item-price">{item.price}</p>}
-          {item.notes && <p>{item.notes}</p>}
-        </div>
-
-        <div className="item-footer">
-          {item.url && (
-            <a href={item.url} target="_blank" rel="noreferrer">
-              Open link
-            </a>
-          )}
-
-          <div className="item-actions">
-            <button className="icon-button" onClick={() => startEditingItem(item)}>
-              Edit
-            </button>
-
-            <button
-              className="icon-button danger-button"
-              onClick={() => deleteItem(item.id)}
-              aria-label={`Delete ${item.title}`}
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
-  )}
-</article>
+                    <div className="vision-controls">
+                      <button onClick={() => startEditingItem(item)}>Edit</button>
+                      <button onClick={() => deleteItem(item.id)}>Delete</button>
+                    </div>
+                  </div>
+                </Rnd>
               ))}
             </div>
+          ) : (
+            <div
+              className={
+                selectedBoard.view_mode === "collage"
+                  ? "items-list collage-list"
+                  : "items-list"
+              }
+            >
+              {items.map((item) => (
+                <article
+                  key={item.id}
+                  className={
+                    selectedBoard.view_mode === "collage"
+                      ? "item-card collage-card"
+                      : "item-card"
+                  }
+                >
+                  {editingItemId === item.id ? (
+                    <div className="edit-item-form">
+                      <input
+                        type="text"
+                        placeholder="Item name"
+                        value={editItemTitle}
+                        onChange={(event) => setEditItemTitle(event.target.value)}
+                      />
+
+                      <input
+                        type="url"
+                        placeholder="Link"
+                        value={editItemUrl}
+                        onChange={(event) => setEditItemUrl(event.target.value)}
+                      />
+
+                      <input
+                        type="url"
+                        placeholder="Image URL"
+                        value={editItemImageUrl}
+                        onChange={(event) => setEditItemImageUrl(event.target.value)}
+                      />
+
+                      <input
+                        type="text"
+                        placeholder="Price"
+                        value={editItemPrice}
+                        onChange={(event) => setEditItemPrice(event.target.value)}
+                      />
+
+                      <input
+                        type="text"
+                        placeholder="Notes"
+                        value={editItemNotes}
+                        onChange={(event) => setEditItemNotes(event.target.value)}
+                      />
+
+                      <div className="item-actions">
+                        <button
+                          className="subtle-button"
+                          onClick={() => saveEditedItem(item.id)}
+                          disabled={itemsLoading}
+                        >
+                          Save
+                        </button>
+
+                        <button className="subtle-button" onClick={cancelEditingItem}>
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {item.image_url ? (
+                        <img className="item-image" src={item.image_url} alt={item.title} />
+                      ) : (
+                        <div className="item-image image-placeholder">
+                          <span>{item.title.slice(0, 1).toUpperCase()}</span>
+                        </div>
+                      )}
+
+                      <div className="item-content">
+                        <div>
+                          <h3>{item.title}</h3>
+
+                          {item.price && <p className="item-price">{item.price}</p>}
+                          {item.notes && <p>{item.notes}</p>}
+                        </div>
+
+                        <div className="item-footer">
+                          {item.url && (
+                            <a href={item.url} target="_blank" rel="noreferrer">
+                              Open link
+                            </a>
+                          )}
+
+                          <div className="item-actions">
+                            <button className="icon-button" onClick={() => startEditingItem(item)}>
+                              Edit
+                            </button>
+
+                            <button
+                              className="icon-button danger-button"
+                              onClick={() => deleteItem(item.id)}
+                              aria-label={`Delete ${item.title}`}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </article>
+              ))}
+            </div>
+          )}
           </section>
         </section>
       </main>
