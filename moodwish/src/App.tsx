@@ -578,16 +578,13 @@ async function updateItemVisionLayout(
                   key={item.id}
                   bounds="parent"
                   enableUserSelectHack={false}
-                  dragGrid={[1, 1]}
-                  resizeGrid={[1, 1]}
-                  size={{
-                    width: item.vision_width ?? 220,
-                    height: item.vision_height ?? 220,
-                  }}
-                  position={{
-  x: item.vision_x ?? (40 + (index % 4) * 190),
-  y: item.vision_y ?? (40 + Math.floor(index / 4) * 190),
+   default={{
+  x: item.vision_x ?? 40 + (index % 4) * 190,
+  y: item.vision_y ?? 40 + Math.floor(index / 4) * 190,
+  width: item.vision_width ?? 220,
+  height: item.vision_height ?? 220,
 }}
+scale={1}
                   minWidth={120}
                   minHeight={120}
                   onDragStop={(_event, data) => {
