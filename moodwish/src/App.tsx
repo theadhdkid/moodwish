@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { Rnd } from "react-rnd";
 import { supabase } from "./lib/supabase";
 import VisionBoardMoveable from "./components/VisionBoardMoveable";
 import "./App.css";
@@ -69,8 +68,6 @@ const [editItemNotes, setEditItemNotes] = useState("");
   const [loading, setLoading] = useState(true);
   const [boardsLoading, setBoardsLoading] = useState(false);
   const [itemsLoading, setItemsLoading] = useState(false);
-
-  const [showMoveableExperiment, setShowMoveableExperiment] = useState(false);
 
   useEffect(() => {
     async function getInitialSession() {
@@ -510,15 +507,6 @@ async function updateItemVisionLayout(
                   </button>
                 </div>
 
-                {selectedBoard.view_mode === "vision" && (
-                  <button
-                    className="text-button"
-                    onClick={() => setShowMoveableExperiment(!showMoveableExperiment)}
-                    style={{ marginTop: "1rem" }}
-                  >
-                    {showMoveableExperiment ? "Back to react-rnd" : "Try Moveable board"}
-                  </button>
-                )}
            </div>
 
             <div className="header-actions">
@@ -584,8 +572,7 @@ async function updateItemVisionLayout(
               <p className="muted">No items yet. Add your first item above.</p>
             )}
 
-                    {selectedBoard.view_mode === "vision" ? (
-       showMoveableExperiment ? (
+{selectedBoard.view_mode === "vision" ? (
   <VisionBoardMoveable
     items={items}
     onUpdateLayout={updateItemVisionLayout}
@@ -593,87 +580,22 @@ async function updateItemVisionLayout(
     onDelete={deleteItem}
   />
 ) : (
-            <div className="vision-canvas">
-              {items.map((item, index) => (
-                <Rnd
-                  key={item.id}
-                  bounds="parent"
-                  enableUserSelectHack={false}
-                  default={{
-                    x: item.vision_x ?? 40 + (index % 4) * 190,
-                    y: item.vision_y ?? 40 + Math.floor(index / 4) * 190,
-                    width: item.vision_width ?? 220,
-                    height: item.vision_height ?? 220,
-                  }}
-                  scale={1}
-                  minWidth={120}
-                  minHeight={120}
-                  onDragStop={(_event, data) => {
-                    updateItemVisionLayout(item.id, {
-                      vision_x: Math.round(data.x),
-                      vision_y: Math.round(data.y),
-                    });
-                  }}
-                  onResizeStop={(_event, _direction, ref, _delta, position) => {
-                    updateItemVisionLayout(item.id, {
-                      vision_width: Math.round(ref.offsetWidth),
-                      vision_height: Math.round(ref.offsetHeight),
-                      vision_x: Math.round(position.x),
-                      vision_y: Math.round(position.y),
-                    });
-                  }}
-                >
-                  <div className="vision-free-item">
-                    {item.url ? (
-                      <a href={item.url} target="_blank" rel="noreferrer">
-                        {item.image_url ? (
-                          <img src={item.image_url} alt={item.title} />
-                        ) : (
-                          <div className="vision-placeholder">
-                            {item.title.slice(0, 1).toUpperCase()}
-                          </div>
-                        )}
-                      </a>
-                    ) : item.image_url ? (
-                      <img src={item.image_url} alt={item.title} />
-                    ) : (
-                      <div className="vision-placeholder">
-                        {item.title.slice(0, 1).toUpperCase()}
-                      </div>
-                    )}
-
-                    {item.show_label !== false && (
-                      <div className="vision-label">
-                        <span>{item.title}</span>
-                      </div>
-                    )}
-
-                    <div className="vision-controls">
-                      <button onClick={() => startEditingItem(item)}>Edit</button>
-                      <button onClick={() => deleteItem(item.id)}>Delete</button>
-                    </div>
-                  </div>
-                </Rnd>
-              ))}
-            </div>
-            )
-          ) : (
-            <div
-              className={
-                selectedBoard.view_mode === "collage"
-                  ? "items-list collage-list"
-                  : "items-list"
-              }
-            >
-              {items.map((item) => (
-                <article
-                  key={item.id}
-                  className={
-                    selectedBoard.view_mode === "collage"
-                      ? "item-card collage-card"
-                      : "item-card"
-                  }
-                >
+  <div
+    className={
+      selectedBoard.view_mode === "collage"
+        ? "items-list collage-list"
+        : "items-list"
+    }
+  >
+    {items.map((item) => (
+      <article
+        key={item.id}
+        className={
+          selectedBoard.view_mode === "collage"
+            ? "item-card collage-card"
+            : "item-card"
+        }
+      >
                   {editingItemId === item.id ? (
                     <div className="edit-item-form">
                       <input
