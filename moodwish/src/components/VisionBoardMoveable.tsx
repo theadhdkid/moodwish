@@ -22,22 +22,41 @@ type WishlistItem = {
   created_at: string;
 };
 
+type VisionLayoutUpdate = {
+  vision_x?: number;
+  vision_y?: number;
+  vision_width?: number;
+  vision_height?: number;
+  vision_rotation?: number;
+  vision_z_index?: number;
+};
+
 type VisionBoardMoveableProps = {
   items: WishlistItem[];
-  onUpdateLayout: (
-    itemId: string,
-    layout: {
-      vision_x?: number;
-      vision_y?: number;
-      vision_width?: number;
-      vision_height?: number;
-      vision_rotation?: number;
-      vision_z_index?: number;
-    }
-  ) => Promise<void>;
+  onUpdateLayout: (itemId: string, layout: VisionLayoutUpdate) => Promise<void>;
   onEdit: (item: WishlistItem) => void;
   onDelete: (itemId: string) => void;
 };
+
+function getDefaultX(item: WishlistItem, index: number) {
+  return item.vision_x ?? 40 + (index % 4) * 190;
+}
+
+function getDefaultY(item: WishlistItem, index: number) {
+  return item.vision_y ?? 40 + Math.floor(index / 4) * 190;
+}
+
+function getDefaultWidth(item: WishlistItem) {
+  return item.vision_width ?? 240;
+}
+
+function getDefaultHeight(item: WishlistItem) {
+  return item.vision_height ?? 280;
+}
+
+function getDefaultRotation(item: WishlistItem) {
+  return item.vision_rotation ?? 0;
+}
 
 export default function VisionBoardMoveable({
   items,
@@ -46,7 +65,9 @@ export default function VisionBoardMoveable({
   onDelete,
 }: VisionBoardMoveableProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const targetRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const targetRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const selectedItem = items.find((item) => item.id === selectedId);
 
   const handleCardClick = (id: string, event: MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
@@ -57,108 +78,113 @@ export default function VisionBoardMoveable({
     setSelectedId(null);
   };
 
-  const handleDrag = (e: any) => {
+  const handleDrag = (event: any) => {
     if (!selectedId) return;
-    const target = targetRefs.current[selectedId];
-    if (!target) return;
-    
-    target.style.transform = e.transform;
-  };
 
-  const handleDragEnd = async (e: any) => {
-    if (!selectedId) return;
-    
-    const item = items.find((i) => i.id === selectedId);
-    if (!item) return;
-
-    const newX = e.lastEvent?.translate[0] ?? item.vision_x ?? 0;
-    const newY = e.lastEvent?.translate[1] ?? item.vision_y ?? 0;
-
-    await onUpdateLayout(selectedId, {
-      vision_x: Math.round(newX),
-      vision_y: Math.round(newY),
-    });
-  };
-
-  const handleResize = (e: any) => {
-    if (!selectedId) return;
     const target = targetRefs.current[selectedId];
     if (!target) return;
 
-    target.style.width = `${e.width}px`;
-    target.style.height = `${e.height}px`;
-    target.style.transform = e.drag.transform;
+    target.style.transform = event.transform;
   };
 
-  const handleResizeEnd = async (e: any) => {
+  const handleDragEnd = async (event: any) => {
     if (!selectedId) return;
 
-    const item = items.find((i) => i.id === selectedId);
+    const itemIndex = items.findIndex((item) => item.id === selectedId);
+    const item = items[itemIndex];
     if (!item) return;
 
     await onUpdateLayout(selectedId, {
-      vision_width: Math.round(e.lastEvent?.width ?? item.vision_width ?? 220),
-      vision_height: Math.round(e.lastEvent?.height ?? item.vision_height ?? 220),
-      vision_x: Math.round(e.lastEvent?.drag.translate[0] ?? item.vision_x ?? 0),
-      vision_y: Math.round(e.lastEvent?.drag.translate[1] ?? item.vision_y ?? 0),
+      vision_x: Math.round(event.lastEvent?.translate[0] ?? getDefaultX(item, itemIndex)),
+      vision_y: Math.round(event.lastEvent?.translate[1] ?? getDefaultY(item, itemIndex)),
     });
   };
 
-  const handleRotate = (e: any) => {
+  const handleResize = (event: any) => {
     if (!selectedId) return;
+
     const target = targetRefs.current[selectedId];
     if (!target) return;
 
-    target.style.transform = e.drag.transform;
+    target.style.width = `${event.width}px`;
+    target.style.height = `${event.height}px`;
+    target.style.transform = event.drag.transform;
   };
 
-  const handleRotateEnd = async (e: any) => {
+  const handleResizeEnd = async (event: any) => {
     if (!selectedId) return;
 
-    const item = items.find((i) => i.id === selectedId);
+    const itemIndex = items.findIndex((item) => item.id === selectedId);
+    const item = items[itemIndex];
     if (!item) return;
 
     await onUpdateLayout(selectedId, {
-      vision_rotation: Math.round(e.lastEvent?.rotate ?? item.vision_rotation ?? 0),
-      vision_x: Math.round(e.lastEvent?.drag.translate[0] ?? item.vision_x ?? 0),
-      vision_y: Math.round(e.lastEvent?.drag.translate[1] ?? item.vision_y ?? 0),
+      vision_width: Math.round(event.lastEvent?.width ?? getDefaultWidth(item)),
+      vision_height: Math.round(event.lastEvent?.height ?? getDefaultHeight(item)),
+      vision_x: Math.round(event.lastEvent?.drag.translate[0] ?? getDefaultX(item, itemIndex)),
+      vision_y: Math.round(event.lastEvent?.drag.translate[1] ?? getDefaultY(item, itemIndex)),
     });
   };
 
-const handleEditClick = (item: WishlistItem, event: MouseEvent<HTMLButtonElement>) => {
-  event.stopPropagation();
-  onEdit(item);
-};
+  const handleRotate = (event: any) => {
+    if (!selectedId) return;
 
-const handleDeleteClick = (itemId: string, event: MouseEvent<HTMLButtonElement>) => {
-  event.stopPropagation();
-  onDelete(itemId);
-};
+    const target = targetRefs.current[selectedId];
+    if (!target) return;
+
+    target.style.transform = event.drag.transform;
+  };
+
+  const handleRotateEnd = async (event: any) => {
+    if (!selectedId) return;
+
+    const itemIndex = items.findIndex((item) => item.id === selectedId);
+    const item = items[itemIndex];
+    if (!item) return;
+
+    await onUpdateLayout(selectedId, {
+      vision_rotation: Math.round(event.lastEvent?.rotate ?? getDefaultRotation(item)),
+      vision_x: Math.round(event.lastEvent?.drag.translate[0] ?? getDefaultX(item, itemIndex)),
+      vision_y: Math.round(event.lastEvent?.drag.translate[1] ?? getDefaultY(item, itemIndex)),
+    });
+  };
+
+  const handleOpenClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    event.stopPropagation();
+  };
+
+  const handleEditClick = (item: WishlistItem, event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    onEdit(item);
+  };
+
+  const handleDeleteClick = (itemId: string, event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    onDelete(itemId);
+  };
 
   return (
     <div className="moveable-board-container">
-      <div 
-        className="moveable-board-canvas"
-        onClick={handleCanvasClick}
-      >
+      <div className="moveable-board-canvas" onClick={handleCanvasClick}>
         {items.map((item, index) => {
-          const x = item.vision_x ?? 40 + (index % 4) * 190;
-          const y = item.vision_y ?? 40 + Math.floor(index / 4) * 190;
-          const width = item.vision_width ?? 220;
-          const height = item.vision_height ?? 220;
-          const rotation = item.vision_rotation ?? 0;
+          const x = getDefaultX(item, index);
+          const y = getDefaultY(item, index);
+          const width = getDefaultWidth(item);
+          const height = getDefaultHeight(item);
+          const rotation = getDefaultRotation(item);
           const zIndex = item.vision_z_index ?? index;
+          const isSelected = selectedId === item.id;
 
           return (
             <div
               key={item.id}
-              ref={(el) => {
-                targetRefs.current[item.id] = el;
+              ref={(element) => {
+                targetRefs.current[item.id] = element;
               }}
               className={`moveable-board-item ${
-                selectedId === item.id ? "moveable-board-item-selected" : ""
+                isSelected ? "moveable-board-item-selected" : ""
               }`}
-              onClick={(e) => handleCardClick(item.id, e)}
+              onClick={(event) => handleCardClick(item.id, event)}
               style={{
                 position: "absolute",
                 left: 0,
@@ -166,44 +192,60 @@ const handleDeleteClick = (itemId: string, event: MouseEvent<HTMLButtonElement>)
                 width: `${width}px`,
                 height: `${height}px`,
                 transform: `translate(${x}px, ${y}px) rotate(${rotation}deg)`,
-                zIndex: selectedId === item.id ? 9999 : zIndex,
+                zIndex: isSelected ? 9999 : zIndex,
               }}
             >
               <div className="moveable-board-item-content">
-                {item.url ? (
-                  <a href={item.url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
-                    {item.image_url ? (
-                      <img src={item.image_url} alt={item.title} />
-                    ) : (
-                      <div className="moveable-board-placeholder">
-                        {item.title.slice(0, 1).toUpperCase()}
-                      </div>
+                <div className="moveable-board-card-image">
+                  {item.image_url ? (
+                    <img src={item.image_url} alt={item.title} draggable={false} />
+                  ) : (
+                    <div className="moveable-board-placeholder">
+                      {item.title.slice(0, 1).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+
+                <div className="moveable-board-card-content">
+                  {item.show_label !== false && (
+                    <h3 className="moveable-board-card-title">{item.title}</h3>
+                  )}
+
+                  {item.show_price !== false && item.price && (
+                    <p className="moveable-board-card-price">{item.price}</p>
+                  )}
+
+                  {item.notes && (
+                    <p className="moveable-board-card-notes">{item.notes}</p>
+                  )}
+
+                  <div className="moveable-board-controls">
+                    {item.url && (
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={handleOpenClick}
+                      >
+                        Open
+                      </a>
                     )}
-                  </a>
-                ) : item.image_url ? (
-                  <img src={item.image_url} alt={item.title} />
-                ) : (
-                  <div className="moveable-board-placeholder">
-                    {item.title.slice(0, 1).toUpperCase()}
-                  </div>
-                )}
 
-                {item.show_label !== false && (
-                  <div className="moveable-board-label">
-                    <span>{item.title}</span>
-                  </div>
-                )}
+                    <button onClick={(event) => handleEditClick(item, event)}>
+                      Edit
+                    </button>
 
-                <div className="moveable-board-controls">
-                  <button onClick={(e) => handleEditClick(item, e)}>Edit</button>
-                  <button onClick={(e) => handleDeleteClick(item.id, e)}>Delete</button>
+                    <button onClick={(event) => handleDeleteClick(item.id, event)}>
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           );
         })}
 
-        {selectedId && (
+        {selectedId && selectedItem && targetRefs.current[selectedId] && (
           <Moveable
             target={targetRefs.current[selectedId]}
             draggable={true}
