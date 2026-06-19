@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { Rnd } from "react-rnd";
 import { supabase } from "./lib/supabase";
-import VisionBoardMoveableExperiment from "./components/VisionBoardMoveableExperiment";
+import VisionBoardMoveable from "./components/VisionBoardMoveable";
 import "./App.css";
 
 type Board = {
@@ -516,7 +516,7 @@ async function updateItemVisionLayout(
                     onClick={() => setShowMoveableExperiment(!showMoveableExperiment)}
                     style={{ marginTop: "1rem" }}
                   >
-                    {showMoveableExperiment ? "Back to react-rnd" : "Try Moveable experiment"}
+                    {showMoveableExperiment ? "Back to react-rnd" : "Try Moveable board"}
                   </button>
                 )}
            </div>
@@ -585,9 +585,14 @@ async function updateItemVisionLayout(
             )}
 
                     {selectedBoard.view_mode === "vision" ? (
-              showMoveableExperiment ? (
-                <VisionBoardMoveableExperiment />
-              ) : (
+       showMoveableExperiment ? (
+  <VisionBoardMoveable
+    items={items}
+    onUpdateLayout={updateItemVisionLayout}
+    onEdit={startEditingItem}
+    onDelete={deleteItem}
+  />
+) : (
             <div className="vision-canvas">
               {items.map((item, index) => (
                 <Rnd

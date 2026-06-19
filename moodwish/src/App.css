@@ -870,3 +870,127 @@ input::placeholder {
 .moveable-experiment-card-content a:hover {
   text-decoration: underline;
 }
+
+/* Real Moveable Board Styles */
+
+.moveable-board-container {
+  width: 100%;
+  margin-top: 24px;
+}
+
+.moveable-board-canvas {
+  position: relative;
+  width: 100%;
+  min-height: 820px;
+  border-radius: 34px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(255, 196, 216, 0.12), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(160, 130, 255, 0.14), transparent 34%),
+    rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.moveable-board-item {
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.moveable-board-item-selected {
+  z-index: 9999 !important;
+}
+
+.moveable-board-item-content {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: visible;
+  background: transparent;
+}
+
+.moveable-board-item-content img,
+.moveable-board-item-content a {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.moveable-board-item-content img {
+  object-fit: contain;
+  border-radius: 18px;
+  background: transparent;
+  pointer-events: none;
+  box-shadow: 0 16px 22px rgba(0, 0, 0, 0.28);
+}
+
+.moveable-board-placeholder {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  border-radius: 22px;
+  color: rgba(248, 244, 255, 0.78);
+  background:
+    radial-gradient(circle at top left, rgba(255, 196, 216, 0.2), transparent 40%),
+    rgba(255, 255, 255, 0.08);
+  font-size: 2rem;
+  font-weight: 800;
+  box-shadow: 0 16px 22px rgba(0, 0, 0, 0.28);
+}
+
+.moveable-board-label {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  color: #17131f;
+  background: rgba(248, 215, 232, 0.95);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-align: center;
+  pointer-events: none;
+}
+
+.moveable-board-label span {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.moveable-board-controls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.14s ease;
+}
+
+.moveable-board-item:hover .moveable-board-controls {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.moveable-board-controls button {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 6px 9px;
+  color: #f8f4ff;
+  background: rgba(20, 19, 26, 0.78);
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease;
+}
+
+.moveable-board-controls button:hover {
+  background: rgba(20, 19, 26, 0.9);
+  border-color: rgba(255, 255, 255, 0.3);
+}
