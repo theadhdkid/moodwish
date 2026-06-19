@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { Rnd } from "react-rnd";
 import { supabase } from "./lib/supabase";
+import VisionBoardMoveableExperiment from "./components/VisionBoardMoveableExperiment";
 import "./App.css";
 
 type Board = {
@@ -68,6 +69,8 @@ const [editItemNotes, setEditItemNotes] = useState("");
   const [loading, setLoading] = useState(true);
   const [boardsLoading, setBoardsLoading] = useState(false);
   const [itemsLoading, setItemsLoading] = useState(false);
+
+  const [showMoveableExperiment, setShowMoveableExperiment] = useState(false);
 
   useEffect(() => {
     async function getInitialSession() {
@@ -506,6 +509,16 @@ async function updateItemVisionLayout(
                     Vision
                   </button>
                 </div>
+
+                {selectedBoard.view_mode === "vision" && (
+                  <button
+                    className="text-button"
+                    onClick={() => setShowMoveableExperiment(!showMoveableExperiment)}
+                    style={{ marginTop: "1rem" }}
+                  >
+                    {showMoveableExperiment ? "Back to react-rnd" : "Try Moveable experiment"}
+                  </button>
+                )}
            </div>
 
             <div className="header-actions">
@@ -572,19 +585,22 @@ async function updateItemVisionLayout(
             )}
 
                     {selectedBoard.view_mode === "vision" ? (
+              showMoveableExperiment ? (
+                <VisionBoardMoveableExperiment />
+              ) : (
             <div className="vision-canvas">
               {items.map((item, index) => (
                 <Rnd
                   key={item.id}
                   bounds="parent"
                   enableUserSelectHack={false}
-   default={{
-  x: item.vision_x ?? 40 + (index % 4) * 190,
-  y: item.vision_y ?? 40 + Math.floor(index / 4) * 190,
-  width: item.vision_width ?? 220,
-  height: item.vision_height ?? 220,
-}}
-scale={1}
+                  default={{
+                    x: item.vision_x ?? 40 + (index % 4) * 190,
+                    y: item.vision_y ?? 40 + Math.floor(index / 4) * 190,
+                    width: item.vision_width ?? 220,
+                    height: item.vision_height ?? 220,
+                  }}
+                  scale={1}
                   minWidth={120}
                   minHeight={120}
                   onDragStop={(_event, data) => {
@@ -635,6 +651,7 @@ scale={1}
                 </Rnd>
               ))}
             </div>
+            )
           ) : (
             <div
               className={
